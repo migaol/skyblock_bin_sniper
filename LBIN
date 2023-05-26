@@ -1,0 +1,31 @@
+public class LBIN {
+	private String name;
+	private int LBIN;
+	
+	public LBIN (String itemName, int itemLBIN) {
+		name = itemName;
+		LBIN = itemLBIN;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	@Override
+	public String toString() {
+		return "LBIN [name= " + name + ", LBIN= " + LBIN + "]";
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public int getLBIN() {
+		return LBIN;
+	}
+
+	public void setLBIN(int lBIN) {
+		LBIN = lBIN;
+	}
+
+}

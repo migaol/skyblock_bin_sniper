@@ -1,0 +1,60 @@
+public class Item {
+	private String name;
+	private String UUID;
+	private int price;
+	private String rarity;
+	private double LBIN;
+	
+	public Item (String itemName, String itemUUID, String itemPrice, String itemRarity) {
+		name = itemName;
+		UUID = itemUUID;
+		price = Integer.parseInt(itemPrice);
+		rarity = itemRarity;
+	}
+	
+	public double getLBIN() {
+		return LBIN;
+	}
+
+	public void setLBIN(double lBIN) {
+		LBIN = lBIN;
+	}
+
+	@Override
+	public String toString() {
+		return "Item [name=" + name + ", UUID=" + UUID + ", price=" + price + ", rarity=" + rarity + "]";
+	}
+
+	public String getRarity() {
+		return rarity;
+	}
+
+	public void setRarity(String rarity) {
+		this.rarity = rarity;
+	}
+
+	public String getUUID() {
+		return UUID;
+	}
+
+	public void setUUID(String UUID) {
+		this.UUID = UUID;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public int getPrice() {
+		return price;
+	}
+
+	public void setPrice(int price) {
+		this.price = price;
+	}
+
+}

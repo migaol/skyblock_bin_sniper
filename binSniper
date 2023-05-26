@@ -1,0 +1,307 @@
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.URL;
+import java.net.URLConnection;
+import java.util.ArrayList;
+
+
+public class binSniper {
+	private static double lastUpdated;
+	private static int numPages;
+	private static String[][] search;
+	private static final String[] RARITIES = {"COMMON","UNCOMMON","RARE","EPIC","LEGENDARY","MYTHIC","DIVINE","SPECIAL","VERY SPECIAL"};			
+	private static int marginAmount;
+	private static double marginPercent;
+	private static ArrayList<Item> items;
+	private static ArrayList<Item> flips;
+	
+    public static void main(String[] args) throws IOException {
+		initVars();
+		lastUpdated();
+		System.out.println("[!] Last updated: " + ((lastUpdated()-lastUpdated)/1000) + " seconds ago");
+		createItems();
+		setLBIN();
+		displayFlips();
+		while (true) {
+			if ((lastUpdated()-lastUpdated)/1000 >= 61) {
+				System.out.println("\n[!] Last updated: " + ((lastUpdated()-lastUpdated)/1000) + " seconds ago");
+				resetVars();
+				createItems();
+	    		setLBIN();
+	    		displayFlips();
+			}
+    	}
+    }
+	
+	public static void initVars() throws IOException {
+		lastUpdated = lastUpdated();
+		numPages = numPages();
+		search = new String[][] {{"Overflux Capacitor","3"},{"Overflux Power Orb","3"},
+								 {"Scythe Blade","4"},{"Reaper Scythe","4"},{"Reaper Scythe","5"},
+								 {"Hyperion","4"}, {"Scylla","4"},{"Astraea","4"},{"Valkyrie","5"},{"Hyperion","5"}, {"Scylla","5"},{"Astraea","5"},{"Valkyrie","5"},
+								 {"Necron's Helmet","4"},{"Necron's Chestplate","4"},{"Necron's Leggings","4"},{"Necron's Boots","4"},{"Necron's Helmet","5"},{"Necron's Chestplate","5"},{"Necron's Leggings","5"},{"Necron's Boots","5"},
+								 {"Storm's Helmet","4"},{"Storm's Chestplate","4"},{"Storm's Leggings","4"},{"Storm's Boots","4"},{"Storm's Helmet","5"},{"Storm's Chestplate","5"},{"Storm's Leggings","5"},{"Storm's Boots","5"},
+								 {"Goldor's Helmet","4"},{"Goldor's Chestplate","4"},{"Goldor's Leggings","4"},{"Goldor's Boots","4"},{"Goldor's Helmet","5"},{"Goldor's Chestplate","5"},{"Goldor's Leggings","5"},{"Goldor's Boots","5"},
+								 {"Maxor's Helmet","4"},{"Maxor's Chestplate","4"},{"Maxor's Leggings","4"},{"Maxor's Boots","4"},{"Maxor's Helmet","5"},{"Maxor's Chestplate","5"},{"Maxor's Leggings","5"},{"Maxor's Boots","5"},
+								 {"Yeti Sword","4"},{"Spirit Scepter","4"},{"Yeti Sword","5"},{"Spirit Scepter","5"},
+								 {"Gyrokinetic Wand","3"},{"Gloomlock Grimoire","3"},
+								 {"[Lvl 1] Wither Skeleton","4"},{"[Lvl 100] Wither Skeleton","4"},
+								 {"[Lvl 1] Elephant","4"},{"[Lvl 100] Elephant","4"},
+								 {"[Lvl 1] Tiger","4"},{"[Lvl 100] Tiger","4"},{"[Lvl 100] Tiger","3"},
+								 {"[Lvl 1] Enderman","4"},{"[Lvl 100] Enderman","4"},{"[Lvl 100] Enderman","5"},
+								 {"[Lvl 1] Rabbit","4"},{"[Lvl 100] Rabbit","4"},
+								 {"[Lvl 1] Blue Whale","4"},{"[Lvl 100] Blue Whale","4"},
+								 {"[Lvl 1] Baby Yeti","3"},{"[Lvl 100] Baby Yeti","3"},{"[Lvl 1] Baby Yeti","4"},{"[Lvl 100] Baby Yeti","4"},
+								 {"Superior Dragon Helmet","4"},{"Superior Dragon Chestplate","4"},{"Superior Dragon Leggings","4"},{"Superior Dragon Boots","4"},{"Superior Dragon Helmet","5"},{"Superior Dragon Chestplate","5"},{"Superior Dragon Leggings","5"},{"Superior Dragon Boots","5"},
+								 {"Shadow Assassin Chestplate","3"},{"Shadow Assassin Chestplate","4"},{"Shadow Assassin Chestplate","5"},
+								 {"Perfect Chestplate - Tier XII","4"},{"Perfect Chestplate - Tier XII","5"}};
+		flips = new ArrayList<Item>();
+		items = new ArrayList<Item>();
+		marginAmount = 1000000;
+		marginPercent = 0.05;
+	}
+	
+	public static void resetVars() throws IOException {
+		lastUpdated = lastUpdated();
+		numPages = numPages();
+		flips.clear();
+		items.clear();
+	}
+    
+    public static String commaSeparator(int num) {
+    	return String.format("%,d", num);
+    }
+	
+    public static void quickSort(ArrayList<Integer> a, int low, int high) {
+        if (a == null || a.size() == 0) {
+            return;
+        } if (low >= high){
+            return;
+        }
+        int pivot = a.get(low + (high-low) / 2);
+        int i = low, j = high;
+        int temp;
+        while (i <= j) {
+            while (a.get(i) < pivot) {
+                i++;
+            }
+            while (a.get(j) > pivot) {
+                j--;
+            }
+            if (i <= j) {
+            	temp = a.get(i);
+            	a.set(i,a.get(j));
+            	a.set(j,temp);
+                i++;
+                j--;
+            }
+        }
+        if (low < j) {
+            quickSort(a, low, j);
+        }
+        if (high > i) {
+            quickSort(a, i, high);
+        }
+    }
+    
+    public static double lastUpdated() throws IOException {
+    	URL url = new URL("https://api.hypixel.net/skyblock/auctions?page=0");
+        URLConnection con = url.openConnection();
+        InputStream is = con.getInputStream();
+        
+        BufferedReader br = new BufferedReader(new InputStreamReader(is));
+        String rawAPI = new String();
+        boolean done = false;
+        try {
+        	while (!done) {
+        		rawAPI += (Character.toString((char) br.read()));
+        		if (rawAPI.contains("\"auctions\":[{")) {
+        			done = true;
+        		}
+        	}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+        int lastUpdatedStart = rawAPI.indexOf("\"lastUpdated\":")+14;
+	    double lastUpdated = Double.parseDouble(rawAPI.substring(lastUpdatedStart,rawAPI.indexOf(",\"",lastUpdatedStart)));
+        
+    	return lastUpdated;
+    }
+    
+    public static int numPages() throws IOException {
+//    	System.out.println("Getting number of API pages...");
+    	int out = 0;
+    	    	
+    	URL url = new URL("https://api.hypixel.net/skyblock/auctions?page=0");
+        URLConnection con = url.openConnection();
+        InputStream is = con.getInputStream();
+        
+        BufferedReader br = new BufferedReader(new InputStreamReader(is));
+        String rawAPI = new String();
+        boolean done = false;
+        try {
+        	while (!done) {
+        		rawAPI += (Character.toString((char) br.read()));
+        		if (rawAPI.contains("\"auctions\":[{")) {
+        			done = true;
+        		}
+        	}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}     
+        
+        int totalPagesStart = rawAPI.indexOf("\"totalPages\":")+13;
+        out = Integer.parseInt(rawAPI.substring(totalPagesStart,rawAPI.indexOf(",\"",totalPagesStart)));
+        System.out.println("[...] Total number of pages found: " + out);
+    	return out;
+    }
+    
+    public static String getAPI(int page) throws IOException {
+//    	System.out.println("Getting page " + page + " of auction API...");
+    	String out = new String();
+
+    	URL url = new URL("https://api.hypixel.net/skyblock/auctions?page=" + page);
+
+        URLConnection con = url.openConnection();
+        InputStream is = con.getInputStream();
+
+        BufferedReader br = new BufferedReader(new InputStreamReader(is));
+        
+        try {
+			out = br.readLine();
+			System.out.println("[...] API page " + page + " import success!");
+		} catch (IOException e) {
+//			System.out.println("API import failed, idk how to fix lmao");
+			e.printStackTrace();
+		}
+    	return out;
+    }
+
+    public static ArrayList<Item> toList(String API) {
+//    	System.out.println("Scanning for specified items...");
+    	ArrayList<Item> out = new ArrayList<Item>();
+    	
+    	boolean done = false;
+    	int nameOffset = 0; int nameStart = 0; int nameEnd = 0; String name = "";
+    	int rarityOffset = 0; int rarityStart = 0; int rarityEnd = 0; String rarity = "";
+    	int UUIDOffset = 0; int UUIDStart = 0; int UUIDEnd = 0; String UUID = "";
+    	int priceOffset = 0; int priceStart = 0; int priceEnd = 0; String price = "";
+    	int binStart = 0; int binEnd = 0; String bin = "";
+    	while (!done) { // LOOP THROUGH FULL API STRING
+    		rarityStart = API.indexOf("\"tier\":", rarityOffset) + 8;
+    		if (rarityStart >= rarityOffset) {
+	    		rarityOffset = rarityEnd = API.indexOf("\"", rarityStart);
+	    		rarity = API.substring(rarityStart,rarityEnd);
+//	    		System.out.println("Rarity:  " + rarity);
+	    		nameStart = API.indexOf("\"item_name\":", nameOffset) + 13;
+        		nameOffset = nameEnd = API.indexOf("\"", nameStart);
+        		name = API.substring(nameStart,nameEnd);
+//        		System.out.println("Name:    " + name);
+        		UUIDStart = API.indexOf("\"uuid\":", UUIDOffset) + 8;
+        		UUIDOffset = UUIDEnd = API.indexOf("\"", UUIDStart);
+        		UUID = API.substring(UUIDStart,UUIDEnd);
+//        		System.out.println("UUID:    " + UUID);
+        		priceStart = API.indexOf("\"starting_bid\":", priceOffset) + 15;
+        		priceOffset = priceEnd = API.indexOf(",\"", priceStart);
+        		price = API.substring(priceStart,priceEnd);
+//        		System.out.println("Price:   " + price);
+        		binStart = API.indexOf("\"bids\":", UUIDOffset) - 5;
+        		binEnd = binStart + 4;
+        		bin = API.substring(binStart,binEnd);
+//        		System.out.println("Bin:   " + bin);
+	    		for (String[] s : search) { // CHECK NAME
+	    			if (bin.contains("true")) {
+		        		if (rarity.contains(RARITIES[Integer.parseInt(s[1])])) {
+		        			if (name.contains(s[0])) {
+		        				out.add(new Item(name,UUID,price,rarity));
+		        			}
+		        		}
+	    			}
+	    		}
+    		} else {
+    			done = true;
+    		}
+    	}
+    	return out;
+    }
+    
+    public static void createItems() throws IOException {
+//		double start;
+		for (int i = 0; i < numPages; i++) {
+//			start = System.currentTimeMillis();
+        	items.addAll(toList(getAPI(i)));
+//        	System.out.println("Time elapsed: " + (System.currentTimeMillis()-start) + " ms");
+        }
+		System.out.println("[...] Specified items added!");
+    }
+    
+    public static int findLBIN(String item, String rarity) {
+//    	System.out.println("Calculating lowest BIN price for " + item + "...");
+    	double LBIN = 0;
+    	String name;
+    	
+    	ArrayList<Item> itemList = new ArrayList<Item>();
+    	ArrayList<Integer> prices = new ArrayList<Integer>();
+    	for (Item i : items) { // CREATE NEW LIST WITH SPECIFIED ITEM
+    		if (i.getName().contains(item) && i.getRarity().contains(rarity)) {
+    			if (i.getName().contains("✪")) {
+    				name = i.getName();
+    				i.setName(name.replaceAll("✪","*"));
+    			}
+    			if (i.getName().contains("⚚")) {
+    				name = i.getName();
+    				i.setName(name.replaceAll("⚚","(+)"));
+    			}
+    			itemList.add(i);
+    			prices.add(i.getPrice());
+    		}
+    	}
+    	
+    	quickSort(prices,0,prices.size()-1);
+    	
+    	for (double price : prices) { // FIND LOWEST BIN
+    		if ((price/LBIN >= 1+marginPercent && price-LBIN >= marginAmount) || price == LBIN) {
+    			LBIN = price;
+    		} else {
+    			break;
+    		}
+    	}
+    	
+    	int flipsFound = 0;
+    	for (Item i : itemList) { // FIND FLIPS
+    		if (i.getPrice() < LBIN) {
+    			flips.add(i);
+    			flipsFound++;
+    		}
+    	}
+    	
+    	for (Item i : itemList) { // SET LBIN
+    		i.setLBIN(LBIN);
+    	}
+    	
+    	System.out.println("[!] " + rarity + " " + item +
+    					   " lowest BIN found: " + commaSeparator((int) LBIN) +
+    					   " coins; out of " + itemList.size() + " total auctions with " +
+    					   flipsFound + " possible flips.");
+    	return (int) LBIN;
+    }
+        
+    public static void setLBIN() {
+		for (String[] s : search) {
+			findLBIN(s[0],RARITIES[Integer.parseInt(s[1])]);
+		}
+    }
+	
+    private static void displayFlips() { 
+		System.out.println();
+		for (Item i : flips) {
+			System.out.println("[$] " + i.getRarity() + " " + i.getName() +
+							   " -> " + commaSeparator(i.getPrice()) +
+							   " | LBIN price: " + commaSeparator((int) i.getLBIN()) + 
+							   " | PROFIT: ~" + commaSeparator((int) i.getLBIN() - i.getPrice()));
+			System.out.println("/viewauction " + i.getUUID());
+		}
+	}
+}
